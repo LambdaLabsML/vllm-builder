@@ -2,6 +2,8 @@ name: Build vLLM Docker Image Matrix
 
 env:
   PARALLELISM: 1
+  MAX_JOBS: 32 # Limit for building multiple archs
+  NVCC_THREADS: 2
   TORCH_CUDA_ARCH_LIST: 9.0a;10.0a
   VLLM_FA_CMAKE_GPU_ARCHES: 90a-real;100a-real
   TRITON_REF: release/3.3.x
@@ -51,6 +53,8 @@ jobs:
           build-args: |
             CUDA_VERSION=${{ matrix.cuda_version }}
             IMAGE_DISTRO=${{ matrix.image_distro }}
+            MAX_JOBS=${{ env.MAX_JOBS }}
+            NVCC_THREADS=${{ env.NVCC_THREADS }}
             TORCH_CUDA_ARCH_LIST=${{ env.TORCH_CUDA_ARCH_LIST }}
             VLLM_FA_CMAKE_GPU_ARCHES=${{ env.VLLM_FA_CMAKE_GPU_ARCHES }}
             TRITON_REF=${{ env.TRITON_REF }}

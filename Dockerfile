@@ -5,6 +5,12 @@ ARG PYTHON_VERSION=3.12
 # ---------- Builder Base ----------
 FROM nvcr.io/nvidia/cuda:${CUDA_VERSION}-devel-${IMAGE_DISTRO} AS base
 
+# Set build scaling
+ARG MAX_JOBS=32
+ENV MAX_JOBS=${MAX_JOBS}
+ARG NVCC_THREADS=2
+ENV NVCC_THREADS=${NVCC_THREADS}
+
 # Set arch lists for all targets
 # 'a' suffix is not forward compatible but enables all optimizations
 ARG TORCH_CUDA_ARCH_LIST="9.0a"
