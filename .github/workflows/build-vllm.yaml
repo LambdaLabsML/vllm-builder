@@ -2,6 +2,8 @@ name: Build vLLM Docker Image Matrix
 
 env:
   PARALLELISM: 1
+  TORCH_CUDA_ARCH_LIST: 9.0a;10.0a
+  VLLM_FA_CMAKE_GPU_ARCHES: 90a-real;100a-real
   TRITON_REF: release/3.3.x
   TRITON_BUILD_VERSION: 3.3.0
   XFORMERS_REF: v0.0.29.post3
