@@ -51,6 +51,8 @@ jobs:
           build-args: |
             CUDA_VERSION=${{ matrix.cuda_version }}
             IMAGE_DISTRO=${{ matrix.image_distro }}
+            TORCH_CUDA_ARCH_LIST=${{ env.TORCH_CUDA_ARCH_LIST }}
+            VLLM_FA_CMAKE_GPU_ARCHES=${{ env.VLLM_FA_CMAKE_GPU_ARCHES }}
             TRITON_REF=${{ env.TRITON_REF }}
             TRITON_BUILD_VERSION=${{ env.TRITON_BUILD_VERSION }}
             XFORMERS_REF=${{ env.XFORMERS_REF }}
