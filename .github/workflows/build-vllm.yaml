@@ -1,7 +1,7 @@
 name: Build vLLM Docker Image Matrix
 
 env:
-  PARALLELISM: 2
+  PARALLELISM: 1
   TRITON_REF: release/3.3.x
   TRITON_BUILD_VERSION: 3.3.0
   XFORMERS_REF: v0.0.29.post3
