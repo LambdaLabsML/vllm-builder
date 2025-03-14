@@ -1,0 +1,82 @@
+name: Build vLLM Docker Image Matrix
+
+env:
+  PARALLELISM: 2
+  GHCR_IMAGE: ghcr.io/${{ github.repository }}
+  TRITON_REF: release/3.3.x
+  TRITON_BUILD_VERSION: 3.3.0
+  XFORMERS_REF: v0.0.29.post3
+  XFORMERS_BUILD_VERSION: 0.0.29.post3
+  FLASHINFER_REF: v0.2.2.post1
+  FLASHINFER_BUILD_VERSION: 0.2.2.post1
+  VLLM_REF: d47807ba
+  VLLM_BUILD_VERSION: 0.7.4
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+        cuda_version: [12.8.0]
+        image_distro: [ubuntu24.04]
+    runs-on: [self-hosted, "${{ matrix.arch }}"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup docker buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-config-inline: |
+            [worker.oci]
+              max-parallelism = ${{ env.PARALLELISM }}
+
+      - name: Build and push builder image
+        uses: docker/build-push-action@v6
+        with:
+          build-args: |
+            CUDA_VERSION=${{ matrix.cuda_version }}
+            IMAGE_DISTRO=${{ matrix.image_distro }}
+            TRITON_REF=${{ env.TRITON_REF }}
+            TRITON_BUILD_VERSION=${{ env.TRITON_BUILD_VERSION }}
+            XFORMERS_REF=${{ env.XFORMERS_REF }}
+            XFORMERS_BUILD_VERSION=${{ env.XFORMERS_BUILD_VERSION }}
+            FLASHINFER_REF=${{ env.FLASHINFER_REF }}
+            FLASHINFER_BUILD_VERSION=${{ env.FLASHINFER_BUILD_VERSION }}
+            VLLM_REF=${{ env.VLLM_REF }}
+            VLLM_BUILD_VERSION=${{ env.VLLM_BUILD_VERSION }}
+          cache-from: type=registry,ref=${{ env.GHCR_IMAGE }}:cache-${{ matrix.arch }}
+          cache-to: type=registry,ref=${{ env.GHCR_IMAGE }}:cache-${{ matrix.arch }},mode=max
+          context: .
+          file: Dockerfile
+          platforms: linux/${{ matrix.arch }}
+          push: true
+          tags: ${{ env.GHCR_IMAGE }}:${{ matrix.arch }}
+
+  ghcr:
+    needs: build
+    runs-on: self-hosted
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Append images
+        run: |
+          ARCHS=(amd64 arm64)
+          docker buildx imagetools create -t ${GHCR_IMAGE}:latest ${ARCHS[@]/#/${GHCR_IMAGE}:}
