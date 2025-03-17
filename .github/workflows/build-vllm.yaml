@@ -91,7 +91,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Append images
+      - name: Tag images
         run: |
           TAGS=(${VLLM_BUILD_VERSION}-cu${CUDA_TAG}-{amd,arm}64)
+          docker buildx imagetools create -t ${GHCR_IMAGE}:${VLLM_BUILD_VERSION} ${TAGS[@]/#/${GHCR_IMAGE}:}
           docker buildx imagetools create -t ${GHCR_IMAGE}:latest ${TAGS[@]/#/${GHCR_IMAGE}:}
