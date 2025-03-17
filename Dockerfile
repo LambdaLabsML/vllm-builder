@@ -1,15 +1,9 @@
-ARG CUDA_VERSION=12.8.0
+ARG CUDA_VERSION=12.6.3
 ARG IMAGE_DISTRO=ubuntu24.04
 ARG PYTHON_VERSION=3.12
 
 # ---------- Builder Base ----------
 FROM nvcr.io/nvidia/cuda:${CUDA_VERSION}-devel-${IMAGE_DISTRO} AS base
-
-# Set build scaling
-ARG MAX_JOBS=32
-ENV MAX_JOBS=${MAX_JOBS}
-ARG NVCC_THREADS=2
-ENV NVCC_THREADS=${NVCC_THREADS}
 
 # Set arch lists for all targets
 # 'a' suffix is not forward compatible but enables all optimizations
@@ -52,7 +46,7 @@ ENV CUDA_HOME=/usr/local/cuda
 ENV LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
 
 # Install pytorch nightly
-RUN uv pip install --pre torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/nightly/cu128
+RUN uv pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu126
 
 FROM base AS build-base
 RUN mkdir /wheels
@@ -62,8 +56,8 @@ RUN mkdir /wheels
 RUN uv pip install -U build cmake ninja pybind11 setuptools wheel
 
 FROM build-base AS build-triton
-ARG TRITON_REF=release/3.3.x
-ARG TRITON_BUILD_VERSION=3.3.0
+ARG TRITON_REF=release/3.2.x
+ARG TRITON_BUILD_VERSION=3.2.0
 ENV BUILD_VERSION=${TRITON_BUILD_VERSION:-${TRITON_REF#v}}
 RUN git clone https://github.com/triton-lang/triton.git
 RUN cd triton && \
@@ -73,8 +67,8 @@ RUN cd triton && \
     uv build python --wheel --no-build-isolation -o /wheels
 
 FROM build-base AS build-xformers
-ARG XFORMERS_REF=v0.0.29.post3
-ARG XFORMERS_BUILD_VERSION=0.0.29.post3
+ARG XFORMERS_REF=v0.0.29.post2
+ARG XFORMERS_BUILD_VERSION=0.0.29.post2
 ENV BUILD_VERSION=${XFORMERS_BUILD_VERSION:-${XFORMERS_REF#v}}
 RUN git clone  https://github.com/facebookresearch/xformers.git
 RUN cd xformers && \
@@ -96,15 +90,14 @@ RUN cd flashinfer && \
     uv build --wheel --no-build-isolation -o /wheels
 
 FROM build-base AS build-vllm
-ARG VLLM_REF=53be4a86
-ARG VLLM_BUILD_VERSION=0.7.4
+ARG VLLM_REF=v0.8.0
+ARG VLLM_BUILD_VERSION=0.8.0
 ENV BUILD_VERSION=${VLLM_BUILD_VERSION:-${VLLM_REF#v}}
 RUN git clone https://github.com/vllm-project/vllm.git
 RUN cd vllm && \
     git checkout ${VLLM_REF} && \
     git submodule sync && \
     git submodule update --init --recursive -j 8 && \
-    python use_existing_torch.py && \
     uv pip install -r requirements/build.txt && \
     uv build --wheel --no-build-isolation -o /wheels
 

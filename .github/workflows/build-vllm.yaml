@@ -2,18 +2,16 @@ name: Build vLLM Docker Image Matrix
 
 env:
   PARALLELISM: 1
-  MAX_JOBS: 32 # Limit for building multiple archs
-  NVCC_THREADS: 2
-  TORCH_CUDA_ARCH_LIST: 9.0a;10.0a
-  VLLM_FA_CMAKE_GPU_ARCHES: 90a-real;100a-real
-  TRITON_REF: release/3.3.x
-  TRITON_BUILD_VERSION: 3.3.0
-  XFORMERS_REF: v0.0.29.post3
-  XFORMERS_BUILD_VERSION: 0.0.29.post3
+  TORCH_CUDA_ARCH_LIST: 9.0a
+  VLLM_FA_CMAKE_GPU_ARCHES: 90a-real
+  TRITON_REF: release/3.2.x
+  TRITON_BUILD_VERSION: 3.2.0
+  XFORMERS_REF: v0.0.29.post2
+  XFORMERS_BUILD_VERSION: 0.0.29.post2
   FLASHINFER_REF: v0.2.2.post1
   FLASHINFER_BUILD_VERSION: 0.2.2.post1
-  VLLM_REF: d47807ba
-  VLLM_BUILD_VERSION: 0.7.4
+  VLLM_REF: v0.8.0
+  VLLM_BUILD_VERSION: 0.8.0
 
 on:
   push:
@@ -25,13 +23,16 @@ jobs:
     strategy:
       matrix:
         arch: [amd64, arm64]
-        cuda_version: [12.8.0]
+        cuda_version: [12.6.3]
         image_distro: [ubuntu24.04]
     runs-on: [self-hosted, "${{ matrix.arch }}"]
     steps:
-      - name: Generate image name
+      - name: Prepare some env vars
         run: |
           echo "GHCR_IMAGE=ghcr.io/${GITHUB_REPOSITORY@L}" >> ${GITHUB_ENV}
+          CUDA_VERSION=${{ matrix.cuda_version }}
+          CUDA_SHORT=${CUDA_VERSION%.*}
+          echo "CUDA_TAG=${CUDA_SHORT//./}" >> ${GITHUB_ENV}
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -65,21 +66,23 @@ jobs:
             FLASHINFER_BUILD_VERSION=${{ env.FLASHINFER_BUILD_VERSION }}
             VLLM_REF=${{ env.VLLM_REF }}
             VLLM_BUILD_VERSION=${{ env.VLLM_BUILD_VERSION }}
-          cache-from: type=registry,ref=${{ env.GHCR_IMAGE }}:cache-${{ matrix.arch }}
-          cache-to: type=registry,ref=${{ env.GHCR_IMAGE }}:cache-${{ matrix.arch }},mode=max
+          cache-from: type=registry,ref=${{ env.GHCR_IMAGE }}:cache-cu${{ env.CUDA_TAG }}-${{ matrix.arch }}
+          cache-to: type=registry,ref=${{ env.GHCR_IMAGE }}:cache-cu${{ env.CUDA_TAG }}-${{ matrix.arch }},mode=max
           context: .
           file: Dockerfile
           platforms: linux/${{ matrix.arch }}
           push: true
-          tags: ${{ env.GHCR_IMAGE }}:${{ matrix.arch }}
+          tags: ${{ env.GHCR_IMAGE }}:${{ env.VLLM_BUILD_VERSION }}-cu${{ env.CUDA_TAG }}-${{ matrix.arch }}
 
+  # Fix this to use matrix and handle imagetools create --append
   ghcr:
     needs: build
     runs-on: self-hosted
     steps:
-      - name: Generate image name
+      - name: Prepare some env vars
         run: |
           echo "GHCR_IMAGE=ghcr.io/${GITHUB_REPOSITORY@L}" >> ${GITHUB_ENV}
+          echo "CUDA_TAG=126" >> ${GITHUB_ENV}
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -90,5 +93,5 @@ jobs:
 
       - name: Append images
         run: |
-          ARCHS=(amd64 arm64)
-          docker buildx imagetools create -t ${GHCR_IMAGE}:latest ${ARCHS[@]/#/${GHCR_IMAGE}:}
+          TAGS=(${VLLM_BUILD_VERSION}-cu${CUDA_TAG}-{amd,arm}64)
+          docker buildx imagetools create -t ${GHCR_IMAGE}:latest ${TAGS[@]/#/${GHCR_IMAGE}:}
