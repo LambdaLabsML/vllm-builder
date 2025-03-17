@@ -57,8 +57,8 @@ RUN uv pip install -U build cmake ninja pybind11 setuptools wheel
 
 FROM build-base AS build-triton
 ARG TRITON_REF=release/3.2.x
-ARG TRITON_BUILD_VERSION=3.2.0
-ENV BUILD_VERSION=${TRITON_BUILD_VERSION:-${TRITON_REF#v}}
+ARG TRITON_BUILD_SUFFIX=+cu126
+ENV TRITON_WHEEL_VERSION_SUFFIX=${TRITON_BUILD_SUFFIX:-}
 RUN git clone https://github.com/triton-lang/triton.git
 RUN cd triton && \
     git checkout ${TRITON_REF} && \
@@ -68,7 +68,7 @@ RUN cd triton && \
 
 FROM build-base AS build-xformers
 ARG XFORMERS_REF=v0.0.29.post2
-ARG XFORMERS_BUILD_VERSION=0.0.29.post2
+ARG XFORMERS_BUILD_VERSION=0.0.29.post2+cu126
 ENV BUILD_VERSION=${XFORMERS_BUILD_VERSION:-${XFORMERS_REF#v}}
 RUN git clone  https://github.com/facebookresearch/xformers.git
 RUN cd xformers && \
@@ -80,8 +80,8 @@ RUN cd xformers && \
 FROM build-base AS build-flashinfer
 ARG FLASHINFER_ENABLE_AOT=1
 ARG FLASHINFER_REF=v0.2.2.post1
-ARG FLASHINFER_BUILD_VERSION=0.2.2.post1
-ENV FLASHINFER_LOCAL_VERSION=${FLASHINFER_BUILD_VERSION:-${FLASHINFER_REF#v}}
+ARG FLASHINFER_BUILD_SUFFIX=cu126
+ENV FLASHINFER_LOCAL_VERSION=${FLASHINFER_BUILD_SUFFIX:-}
 RUN git clone https://github.com/flashinfer-ai/flashinfer.git
 RUN cd flashinfer && \
     git checkout ${FLASHINFER_REF} && \
@@ -90,9 +90,7 @@ RUN cd flashinfer && \
     uv build --wheel --no-build-isolation -o /wheels
 
 FROM build-base AS build-vllm
-ARG VLLM_REF=v0.8.0
-ARG VLLM_BUILD_VERSION=0.8.0
-ENV BUILD_VERSION=${VLLM_BUILD_VERSION:-${VLLM_REF#v}}
+ARG VLLM_REF=v0.8.0rc2
 RUN git clone https://github.com/vllm-project/vllm.git
 RUN cd vllm && \
     git checkout ${VLLM_REF} && \

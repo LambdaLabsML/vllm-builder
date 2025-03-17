@@ -5,13 +5,12 @@ env:
   TORCH_CUDA_ARCH_LIST: 9.0a
   VLLM_FA_CMAKE_GPU_ARCHES: 90a-real
   TRITON_REF: release/3.2.x
-  TRITON_BUILD_VERSION: 3.2.0
+  TRITON_BUILD_SUFFIX: +cu126
   XFORMERS_REF: v0.0.29.post2
-  XFORMERS_BUILD_VERSION: 0.0.29.post2
+  XFORMERS_BUILD_VERSION: 0.0.29.post2+cu126
   FLASHINFER_REF: v0.2.2.post1
-  FLASHINFER_BUILD_VERSION: 0.2.2.post1
-  VLLM_REF: v0.8.0
-  VLLM_BUILD_VERSION: 0.8.0
+  FLASHINFER_BUILD_SUFFIX: cu126
+  VLLM_REF: v0.8.0rc2
 
 on:
   push:
@@ -54,25 +53,22 @@ jobs:
           build-args: |
             CUDA_VERSION=${{ matrix.cuda_version }}
             IMAGE_DISTRO=${{ matrix.image_distro }}
-            MAX_JOBS=${{ env.MAX_JOBS }}
-            NVCC_THREADS=${{ env.NVCC_THREADS }}
             TORCH_CUDA_ARCH_LIST=${{ env.TORCH_CUDA_ARCH_LIST }}
             VLLM_FA_CMAKE_GPU_ARCHES=${{ env.VLLM_FA_CMAKE_GPU_ARCHES }}
             TRITON_REF=${{ env.TRITON_REF }}
-            TRITON_BUILD_VERSION=${{ env.TRITON_BUILD_VERSION }}
+            TRITON_BUILD_SUFFIX=${{ env.TRITON_BUILD_SUFFIX }}
             XFORMERS_REF=${{ env.XFORMERS_REF }}
             XFORMERS_BUILD_VERSION=${{ env.XFORMERS_BUILD_VERSION }}
             FLASHINFER_REF=${{ env.FLASHINFER_REF }}
-            FLASHINFER_BUILD_VERSION=${{ env.FLASHINFER_BUILD_VERSION }}
+            FLASHINFER_BUILD_SUFFIX=${{ env.FLASHINFER_BUILD_SUFFIX }}
             VLLM_REF=${{ env.VLLM_REF }}
-            VLLM_BUILD_VERSION=${{ env.VLLM_BUILD_VERSION }}
           cache-from: type=registry,ref=${{ env.GHCR_IMAGE }}:cache-cu${{ env.CUDA_TAG }}-${{ matrix.arch }}
           cache-to: type=registry,ref=${{ env.GHCR_IMAGE }}:cache-cu${{ env.CUDA_TAG }}-${{ matrix.arch }},mode=max
           context: .
           file: Dockerfile
           platforms: linux/${{ matrix.arch }}
           push: true
-          tags: ${{ env.GHCR_IMAGE }}:${{ env.VLLM_BUILD_VERSION }}-cu${{ env.CUDA_TAG }}-${{ matrix.arch }}
+          tags: ${{ env.GHCR_IMAGE }}:${{ env.VLLM_REF }}-cu${{ env.CUDA_TAG }}-${{ matrix.arch }}
 
   # Fix this to use matrix and handle imagetools create --append
   ghcr:
@@ -93,6 +89,6 @@ jobs:
 
       - name: Tag images
         run: |
-          TAGS=(${VLLM_BUILD_VERSION}-cu${CUDA_TAG}-{amd,arm}64)
-          docker buildx imagetools create -t ${GHCR_IMAGE}:${VLLM_BUILD_VERSION} ${TAGS[@]/#/${GHCR_IMAGE}:}
+          TAGS=(${VLLM_REF}-cu${CUDA_TAG}-{amd,arm}64)
+          docker buildx imagetools create -t ${GHCR_IMAGE}:${VLLM_REF} ${TAGS[@]/#/${GHCR_IMAGE}:}
           docker buildx imagetools create -t ${GHCR_IMAGE}:latest ${TAGS[@]/#/${GHCR_IMAGE}:}
