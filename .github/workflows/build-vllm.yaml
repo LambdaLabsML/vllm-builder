@@ -33,6 +33,9 @@ jobs:
           CUDA_SHORT=${CUDA_VERSION%.*}
           echo "CUDA_TAG=${CUDA_SHORT//./}" >> ${GITHUB_ENV}
 
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
