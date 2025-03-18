@@ -109,6 +109,9 @@ COPY --from=build-xformers /wheels/* wheels/
 RUN uv pip install wheels/*
 RUN rm -r wheels
 
+# Install pynvml
+RUN uv pip install pynvml
+
 # Add additional packages for vLLM OpenAI
 RUN uv pip install accelerate hf_transfer modelscope bitsandbytes timm boto3 runai-model-streamer runai-model-streamer[s3] tensorizer
 
