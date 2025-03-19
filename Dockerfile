@@ -90,7 +90,7 @@ RUN cd flashinfer && \
     uv build --wheel --no-build-isolation -o /wheels
 
 FROM build-base AS build-vllm
-ARG VLLM_REF=v0.8.0
+ARG VLLM_REF=v0.8.1
 RUN git clone https://github.com/vllm-project/vllm.git
 RUN cd vllm && \
     git checkout ${VLLM_REF} && \
