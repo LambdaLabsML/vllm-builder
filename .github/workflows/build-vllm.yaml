@@ -10,7 +10,7 @@ env:
   XFORMERS_BUILD_VERSION: 0.0.29.post2+cu126
   FLASHINFER_REF: v0.2.2.post1
   FLASHINFER_BUILD_SUFFIX: cu126
-  VLLM_REF: v0.8.0rc2
+  VLLM_REF: v0.8.0
 
 on:
   push:
