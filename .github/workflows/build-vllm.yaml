@@ -4,17 +4,24 @@ env:
   PARALLELISM: 1
   TORCH_CUDA_ARCH_LIST: 9.0a
   VLLM_FA_CMAKE_GPU_ARCHES: 90a-real
+  TORCH_REF: v2.6.0
+  TORCH_BUILD_VERSION: 2.6.0+cu124
+  AUDIO_REF: v2.6.0
+  AUDIO_BUILD_VERSION: 2.6.0+cu124
+  VISION_REF: v0.21.0
+  VISION_BUILD_VERSION: 0.21.0+cu124
   TRITON_REF: release/3.2.x
-  TRITON_BUILD_SUFFIX: +cu126
+  TRITON_BUILD_SUFFIX: +cu124
   XFORMERS_REF: v0.0.29.post2
-  XFORMERS_BUILD_VERSION: 0.0.29.post2+cu126
+  XFORMERS_BUILD_VERSION: 0.0.29.post2+cu124
   FLASHINFER_REF: v0.2.2.post1
-  FLASHINFER_BUILD_SUFFIX: cu126
-  VLLM_REF: v0.8.1
+  FLASHINFER_BUILD_SUFFIX: cu124
+  VLLM_REF: v0.8.2
+  VLLM_BUILD_VERSION: 0.8.2
 
 on:
   push:
-    branches: [main]
+    branches: [cu124]
   pull_request:
 
 jobs:
@@ -22,8 +29,8 @@ jobs:
     strategy:
       matrix:
         arch: [amd64, arm64]
-        cuda_version: [12.6.3]
-        image_distro: [ubuntu24.04]
+        cuda_version: [12.4.1]
+        image_distro: [ubuntu22.04]
     runs-on: [self-hosted, "${{ matrix.arch }}"]
     steps:
       - name: Prepare some env vars
@@ -65,13 +72,13 @@ jobs:
             FLASHINFER_REF=${{ env.FLASHINFER_REF }}
             FLASHINFER_BUILD_SUFFIX=${{ env.FLASHINFER_BUILD_SUFFIX }}
             VLLM_REF=${{ env.VLLM_REF }}
-          cache-from: type=registry,ref=${{ env.GHCR_IMAGE }}:cache-cu${{ env.CUDA_TAG }}-${{ matrix.arch }}
-          cache-to: type=registry,ref=${{ env.GHCR_IMAGE }}:cache-cu${{ env.CUDA_TAG }}-${{ matrix.arch }},mode=max
+          cache-from: type=registry,ref=${{ env.GHCR_IMAGE }}:cache-cu${{ env.CUDA_TAG }}-${{ matrix.image_distro }}-${{ matrix.arch }}
+          cache-to: type=registry,ref=${{ env.GHCR_IMAGE }}:cache-cu${{ env.CUDA_TAG }}-${{ matrix.image_distro }}-${{ matrix.arch }},mode=max
           context: .
           file: Dockerfile
           platforms: linux/${{ matrix.arch }}
           push: true
-          tags: ${{ env.GHCR_IMAGE }}:${{ env.VLLM_REF }}-cu${{ env.CUDA_TAG }}-${{ matrix.arch }}
+          tags: ${{ env.GHCR_IMAGE }}:${{ env.VLLM_REF }}-cu${{ env.CUDA_TAG }}-${{ matrix.image_distro }}-${{ matrix.arch }}
 
   # Fix this to use matrix and handle imagetools create --append
   ghcr:
@@ -81,7 +88,7 @@ jobs:
       - name: Prepare some env vars
         run: |
           echo "GHCR_IMAGE=ghcr.io/${GITHUB_REPOSITORY@L}" >> ${GITHUB_ENV}
-          echo "CUDA_TAG=126" >> ${GITHUB_ENV}
+          echo "CUDA_TAG=124" >> ${GITHUB_ENV}
 
       - name: Login to GHCR
         uses: docker/login-action@v3
