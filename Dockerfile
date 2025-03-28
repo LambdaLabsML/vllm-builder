@@ -66,9 +66,9 @@ RUN if [ ${TARGETARCH} = arm64 ]; then \
         export BLAS=NVPL && \
         # ARM64 linker optimization \
         export CMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=0x10000 && \
-        export USE_PRIORITIZED_TEXT_FOR_LD=1 && \
+        export USE_PRIORITIZED_TEXT_FOR_LD=1; \
     else \
-        uv pip install mkl-static mkl-include && \
+        uv pip install mkl-static mkl-include; \
     fi
 
 ARG TORCH_REF=v2.6.0
