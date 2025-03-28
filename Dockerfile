@@ -59,6 +59,7 @@ RUN uv pip install -U build "cmake<4" ninja pybind11 "setuptools<=76" wheel
 
 # Handle arm64 torch build
 FROM build-base AS build-torch
+ARG TARGETARCH
 RUN if [ ${TARGETARCH} = arm64 ]; then \
         # Install NVPL for ARM64 \
         apt install -y --no-install-recommends nvpl0 && \
