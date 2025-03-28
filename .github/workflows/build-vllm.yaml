@@ -99,6 +99,6 @@ jobs:
 
       - name: Tag images
         run: |
-          TAGS=(${VLLM_REF}-cu${CUDA_TAG}-{amd,arm}64)
+          TAGS=(${VLLM_REF}-cu${CUDA_TAG}-ubuntu22.04-{amd,arm}64)
           docker buildx imagetools create -t ${GHCR_IMAGE}:${VLLM_REF} ${TAGS[@]/#/${GHCR_IMAGE}:}
           docker buildx imagetools create -t ${GHCR_IMAGE}:latest ${TAGS[@]/#/${GHCR_IMAGE}:}
