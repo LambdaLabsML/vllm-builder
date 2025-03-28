@@ -18,9 +18,6 @@ ENV TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST}
 ARG VLLM_FA_CMAKE_GPU_ARCHES="90a-real"
 ENV VLLM_FA_CMAKE_GPU_ARCHES=${VLLM_FA_CMAKE_GPU_ARCHES}
 
-# ARM64 linker optimization
-ENV USE_PRIORITIZED_TEXT_FOR_LD=1
-
 # Update apt packages and install dependencies
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update
@@ -57,33 +54,21 @@ RUN mkdir /wheels
 
 # Install build deps that aren't in project requirements files
 # Make sure to upgrade setuptools to avoid triton build bug
-RUN uv pip install -U build cmake ninja pybind11 "setuptools<=76" wheel
-
-# Route targets based on platform
-FROM --platform=linux/amd64 build-base AS build-amd64
-FROM --platform=linux/arm64 build-base AS build-arm64
+# cmake '4.x' isn't parsed right by some tools yet
+RUN uv pip install -U build "cmake<4" ninja pybind11 "setuptools<=76" wheel
 
 # Handle arm64 torch build
-FROM build-arm64 AS build-torch
-RUN apt install -y --no-install-recommends nvpl0
-RUN uv pip install -U patchelf scons
-
-# Build ARM ComputeLibrary
-ARG ACL_REF=v24.09
-ENV ACL_ROOT_DIR=${PWD}/acl
-ENV ACL_INCLUDE_DIR=${ACL_ROOT_DIR}/include
-ENV ACL_LIBRARY=${ACL_ROOT_DIR}/build
-RUN mkdir acl
-RUN git clone https://github.com/ARM-software/ComputeLibrary.git
-RUN cd ComputeLibrary && \
-    git checkout ${ACL_REF} && \
-    git submodule sync --recursive && \
-    git submodule update --init --recursive -j 8
-RUN cd ComputeLibrary && \
-    scons Werror=1 -j 8 build_dir=${ACL_LIBRARY} debug=0 neon=1 opencl=0 os=linux openmp=1 cppthreads=0 arch=armv8a multi_isa=1 fixed_format_kernels=1 build=native
-
-ENV LD_LIBRARY_PATH=${ACL_LIBRARY}:${LD_LIBRARY_PATH}
-ENV BLAS=NVPL
+FROM build-base AS build-torch
+RUN if [ ${TARGETARCH} = arm64 ]; then \
+        # Install NVPL for ARM64 \
+        apt install -y --no-install-recommends nvpl0 && \
+        export BLAS=NVPL && \
+        # ARM64 linker optimization \
+        export CMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=0x10000 && \
+        export USE_PRIORITIZED_TEXT_FOR_LD=1 && \
+    else \
+        uv pip install mkl-static mkl-include && \
+    fi
 
 ARG TORCH_REF=v2.6.0
 ARG TORCH_BUILD_VERSION=2.6.0+cu124
@@ -93,29 +78,10 @@ RUN git clone https://github.com/pytorch/pytorch.git
 RUN cd pytorch && \
     git checkout ${PYTORCH_REF} && \
     git submodule sync --recursive && \
-    git submodule update --init --recursive -j8 && \
-    # Bump XNNPACK submodule ref to fix compilation bug \
-    cd third_party/XNNPACK && \
-    git checkout fcc06d1
-RUN cd pytorch && \
-    uv pip install -r requirements.txt && \
-    uv build --wheel --no-build-isolation -o /wheels
-
-# Handle amd64 torch build
-FROM --platform=linux/amd64 build-amd64 AS build-torch
-
-ARG TORCH_REF=v2.6.0
-ARG TORCH_BUILD_VERSION=2.6.0+cu124
-ENV PYTORCH_BUILD_VERSION=${TORCH_BUILD_VERSION:-${TORCH_REF#v}}
-ENV PYTORCH_BUILD_NUMBER=0
-RUN git clone https://github.com/pytorch/pytorch.git
-RUN cd pytorch && \
-    git checkout ${PYTORCH_REF} && \
-    git submodule sync --recursive && \
-    git submodule update --init --recursive -j 8 && \
-    # Bump XNNPACK submodule ref to fix compilation bug \
-    cd third_party/XNNPACK && \
-    git checkout fcc06d1
+    git submodule update --init --recursive -j8
+    # # Bump XNNPACK submodule ref to fix compilation bug \
+    # cd third_party/XNNPACK && \
+    # git checkout fcc06d1
 RUN cd pytorch && \
     uv pip install -r requirements.txt && \
     uv build --wheel --no-build-isolation -o /wheels
