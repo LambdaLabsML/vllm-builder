@@ -77,9 +77,9 @@ ENV PYTORCH_BUILD_VERSION=${TORCH_BUILD_VERSION:-${TORCH_REF#v}}
 ENV PYTORCH_BUILD_NUMBER=0
 RUN git clone https://github.com/pytorch/pytorch.git
 RUN cd pytorch && \
-    git checkout ${PYTORCH_REF} && \
+    git checkout ${TORCH_REF} && \
     git submodule sync --recursive && \
-    git submodule update --init --recursive -j8
+    git submodule update --init --recursive -j 8
     # # Bump XNNPACK submodule ref to fix compilation bug \
     # cd third_party/XNNPACK && \
     # git checkout fcc06d1
