@@ -167,19 +167,13 @@ FROM build-base AS build-vllm
 COPY --from=build-torch /wheels/*.whl wheels/
 RUN uv pip install wheels/*
 
-ARG VLLM_PR
 ARG VLLM_REF=v0.8.3
 ARG VLLM_BUILD_VERSION=0.8.3
 ENV BUILD_VERSION=${VLLM_BUILD_VERSION:-${VLLM_REF#v}}
 ENV SETUPTOOLS_SCM_PRETEND_VERSION=${BUILD_VERSION:-:}
 RUN git clone https://github.com/vllm-project/vllm.git
 RUN cd vllm && \
-    if [ -n ${VLLM_PR} ]; then \
-        git fetch origin pull/${VLLM_PR}/head:${VLLM_PR} && \
-        git checkout ${VLLM_PR}; \
-    else \
-        git checkout ${VLLM_REF}; \
-    fi && \
+    git checkout ${VLLM_REF} && \
     python use_existing_torch.py && \
     uv pip install -r requirements/build.txt && \
     uv build --wheel --no-build-isolation -o /wheels

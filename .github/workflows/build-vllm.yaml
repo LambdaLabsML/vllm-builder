@@ -16,7 +16,6 @@ env:
   XFORMERS_BUILD_VERSION: 0.0.29.post2+cu124
   FLASHINFER_REF: v0.2.2.post1
   FLASHINFER_BUILD_SUFFIX: cu124
-  VLLM_PR: 16104
   VLLM_REF: v0.8.3
   VLLM_BUILD_VERSION: 0.8.3
 
@@ -72,7 +71,6 @@ jobs:
             XFORMERS_BUILD_VERSION=${{ env.XFORMERS_BUILD_VERSION }}
             FLASHINFER_REF=${{ env.FLASHINFER_REF }}
             FLASHINFER_BUILD_SUFFIX=${{ env.FLASHINFER_BUILD_SUFFIX }}
-            VLLM_PR=${{ env.VLLM_PR }}
             VLLM_REF=${{ env.VLLM_REF }}
             VLLM_BUILD_VERSION=${{ env.VLLM_BUILD_VERSION }}
           cache-from: type=registry,ref=${{ env.GHCR_IMAGE }}:cache-cu${{ env.CUDA_TAG }}-${{ matrix.image_distro }}-${{ matrix.arch }}
