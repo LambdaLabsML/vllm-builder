@@ -175,7 +175,7 @@ ENV SETUPTOOLS_SCM_PRETEND_VERSION=${BUILD_VERSION:-:}
 RUN git clone https://github.com/vllm-project/vllm.git
 RUN cd vllm && \
     if [ -n ${VLLM_PR} ]; then \
-        git fetch origin pull/${VLLM_PR}/head:${VLLM_PR}
+        git fetch origin pull/${VLLM_PR}/head:${VLLM_PR} && \
         git checkout ${VLLM_PR}; \
     else \
         git checkout ${VLLM_REF}; \
