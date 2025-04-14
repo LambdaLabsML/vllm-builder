@@ -187,6 +187,9 @@ COPY --from=build-triton /wheels/*.whl wheels/
 COPY --from=build-vllm /wheels/*.whl wheels/
 COPY --from=build-xformers /wheels/*.whl wheels/
 
+# Copy vllm examples directory
+COPY --from=build-vllm vllm/examples .
+
 # Install and cleanup wheels
 RUN uv pip install wheels/*
 
