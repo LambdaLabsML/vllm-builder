@@ -188,7 +188,7 @@ COPY --from=build-vllm /wheels/*.whl wheels/
 COPY --from=build-xformers /wheels/*.whl wheels/
 
 # Copy vllm examples directory
-COPY --from=build-vllm /workspace/vllm/examples /workspace/
+COPY --from=build-vllm /workspace/vllm/examples /workspace/examples/
 
 # Install and cleanup wheels
 RUN uv pip install wheels/*
