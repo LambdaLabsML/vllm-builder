@@ -192,6 +192,7 @@ COPY --from=build-vllm /workspace/vllm/examples /workspace/examples/
 
 # Install and cleanup wheels
 RUN uv pip install wheels/*
+RUN rm -rf wheels
 
 # Install pynvml
 RUN uv pip install pynvml
