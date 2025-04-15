@@ -1,4 +1,4 @@
-ARG CUDA_VERSION=12.4.1
+ARG CUDA_VERSION=12.8.1
 ARG IMAGE_DISTRO=ubuntu22.04
 ARG PYTHON_VERSION=3.12
 
@@ -72,7 +72,7 @@ RUN if [ ${TARGETARCH} = arm64 ]; then \
     fi
 
 ARG TORCH_REF=v2.6.0
-ARG TORCH_BUILD_VERSION=2.6.0+cu124
+ARG TORCH_BUILD_VERSION=2.6.0+cu128
 ENV PYTORCH_BUILD_VERSION=${TORCH_BUILD_VERSION:-${TORCH_REF#v}}
 ENV PYTORCH_BUILD_NUMBER=0
 RUN git clone https://github.com/pytorch/pytorch.git
@@ -92,7 +92,7 @@ COPY --from=build-torch /wheels/*.whl wheels/
 RUN uv pip install wheels/*
 
 ARG AUDIO_REF=v2.6.0
-ARG AUDIO_BUILD_VERSION=2.6.0+cu124
+ARG AUDIO_BUILD_VERSION=2.6.0+cu128
 ENV BUILD_VERSION=${AUDIO_BUILD_VERSION:-${AUDIO_REF#v}}
 RUN git clone https://github.com/pytorch/audio.git
 RUN cd audio && \
@@ -107,7 +107,7 @@ COPY --from=build-torch /wheels/*.whl wheels/
 RUN uv pip install wheels/*
 
 ARG VISION_REF=v0.21.0
-ARG VISION_BUILD_VERSION=0.21.0+cu124
+ARG VISION_BUILD_VERSION=0.21.0+cu128
 ENV BUILD_VERSION=${VISION_BUILD_VERSION:-${VISION_REF#v}}
 RUN git clone https://github.com/pytorch/vision.git
 RUN cd vision && \
@@ -122,7 +122,7 @@ COPY --from=build-torch /wheels/*.whl wheels/
 RUN uv pip install wheels/*
 
 ARG TRITON_REF=release/3.2.x
-ARG TRITON_BUILD_SUFFIX=+cu124
+ARG TRITON_BUILD_SUFFIX=+cu128
 ENV TRITON_WHEEL_VERSION_SUFFIX=${TRITON_BUILD_SUFFIX:-}
 RUN git clone https://github.com/triton-lang/triton.git
 RUN cd triton && \
@@ -137,7 +137,7 @@ COPY --from=build-torch /wheels/*.whl wheels/
 RUN uv pip install wheels/*
 
 ARG XFORMERS_REF=v0.0.29.post2
-ARG XFORMERS_BUILD_VERSION=0.0.29.post2+cu124
+ARG XFORMERS_BUILD_VERSION=0.0.29.post2+cu128
 ENV BUILD_VERSION=${XFORMERS_BUILD_VERSION:-${XFORMERS_REF#v}}
 RUN git clone https://github.com/facebookresearch/xformers.git
 RUN cd xformers && \
@@ -153,7 +153,7 @@ RUN uv pip install wheels/*
 
 ARG FLASHINFER_ENABLE_AOT=1
 ARG FLASHINFER_REF=v0.2.2.post1
-ARG FLASHINFER_BUILD_SUFFIX=cu124
+ARG FLASHINFER_BUILD_SUFFIX=cu128
 ENV FLASHINFER_LOCAL_VERSION=${FLASHINFER_BUILD_SUFFIX:-}
 RUN git clone https://github.com/flashinfer-ai/flashinfer.git
 RUN cd flashinfer && \
@@ -167,8 +167,8 @@ FROM build-base AS build-vllm
 COPY --from=build-torch /wheels/*.whl wheels/
 RUN uv pip install wheels/*
 
-ARG VLLM_REF=v0.8.3
-ARG VLLM_BUILD_VERSION=0.8.3
+ARG VLLM_REF=v0.8.4
+ARG VLLM_BUILD_VERSION=0.8.4
 ENV BUILD_VERSION=${VLLM_BUILD_VERSION:-${VLLM_REF#v}}
 ENV SETUPTOOLS_SCM_PRETEND_VERSION=${BUILD_VERSION:-:}
 RUN git clone https://github.com/vllm-project/vllm.git
