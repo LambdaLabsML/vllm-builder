@@ -55,7 +55,7 @@ RUN mkdir /wheels
 # Install build deps that aren't in project requirements files
 # Make sure to upgrade setuptools to avoid triton build bug
 # cmake '4.x' isn't parsed right by some tools yet
-RUN uv pip install -U build "cmake<4" ninja pybind11 "setuptools<=76" wheel
+RUN uv pip install -U build "cmake<4" ninja pybind11 setuptools wheel
 
 # Handle arm64 torch build
 FROM build-base AS build-torch
