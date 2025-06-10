@@ -150,7 +150,7 @@ RUN uv pip install -U torch torchvision torchaudio build cmake ninja pybind11 se
 
 FROM build-base AS build-flashinfer
 # COPY --from=build-torch /wheels/*.whl wheels/
-RUN uv pip install wheels/*
+# RUN uv pip install wheels/*
 
 ARG FLASHINFER_ENABLE_AOT=1
 ARG FLASHINFER_REF=v0.2.6.post1
@@ -166,7 +166,7 @@ RUN cd flashinfer && \
 
 FROM build-base AS build-vllm
 # COPY --from=build-torch /wheels/*.whl wheels/
-RUN uv pip install wheels/*
+# RUN uv pip install wheels/*
 
 ARG VLLM_REF=v0.9.0.1
 ARG VLLM_BUILD_VERSION=0.9.0.1
