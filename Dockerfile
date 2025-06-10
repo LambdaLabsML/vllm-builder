@@ -165,7 +165,7 @@ RUN cd flashinfer && \
     uv build --wheel --no-build-isolation -o /wheels
 
 FROM build-base AS build-vllm
-COPY --from=build-torch /wheels/*.whl wheels/
+# COPY --from=build-torch /wheels/*.whl wheels/
 RUN uv pip install wheels/*
 
 ARG VLLM_REF=v0.9.0.1
