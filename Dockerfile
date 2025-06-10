@@ -57,7 +57,7 @@ RUN mkdir /wheels
 
 # Install build deps that aren't in project requirements files
 # Make sure to upgrade setuptools to avoid triton build bug
-RUN uv pip install -U build cmake<4 ninja packaging pybind11 setuptools wheel
+RUN uv pip install -U build cmake ninja packaging pybind11 setuptools wheel
 
 FROM build-base AS build-xformers
 ARG XFORMERS_REF=v0.0.30
