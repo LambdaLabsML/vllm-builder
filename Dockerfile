@@ -56,6 +56,7 @@ RUN mkdir /wheels
 # Make sure to upgrade setuptools to avoid triton build bug
 # cmake '4.x' isn't parsed right by some tools yet
 #RUN uv pip install -U build "cmake<4" ninja pybind11 setuptools wheel
+RUN uv pip install -U torch torchvision torchaudio build cmake ninja pybind11 setuptools wheel
 
 # # Handle arm64 torch build
 # FROM build-base AS build-torch
@@ -148,7 +149,7 @@ RUN mkdir /wheels
 #     uv build --wheel --no-build-isolation -o /wheels
 
 FROM build-base AS build-flashinfer
-COPY --from=build-torch /wheels/*.whl wheels/
+# COPY --from=build-torch /wheels/*.whl wheels/
 RUN uv pip install wheels/*
 
 ARG FLASHINFER_ENABLE_AOT=1
@@ -174,7 +175,7 @@ ENV SETUPTOOLS_SCM_PRETEND_VERSION=${BUILD_VERSION:-:}
 RUN git clone https://github.com/vllm-project/vllm.git
 RUN cd vllm && \
     git checkout ${VLLM_REF} && \
-    # python use_existing_torch.py && \
+    python use_existing_torch.py && \
     uv pip install -r requirements/build.txt && \
     uv build --wheel --no-build-isolation -o /wheels
 
