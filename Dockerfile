@@ -162,6 +162,7 @@ RUN cd flashinfer && \
     git submodule sync --recursive && \
     git submodule update --init --recursive -j 8
 RUN cd flashinfer && \
+    python -m flashinfer.aot && \
     uv build -v --wheel --no-build-isolation -o /wheels
 
 FROM build-base AS build-vllm
