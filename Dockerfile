@@ -49,7 +49,7 @@ ENV PATH=${VIRTUAL_ENV}/bin:${PATH}
 ENV CUDA_HOME=/usr/local/cuda
 ENV LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
 
-FROM base as torch-base
+FROM base AS torch-base
 RUN uv pip install -U torch torchvision torchaudio triton --index-url https://download.pytorch.org/whl/cu128
 
 FROM torch-base AS build-base
