@@ -152,7 +152,7 @@ FROM build-base AS build-flashinfer
 # COPY --from=build-torch /wheels/*.whl wheels/
 # RUN uv pip install wheels/*
 
-ARG FLASHINFER_ENABLE_AOT=1
+# ARG FLASHINFER_ENABLE_AOT=1
 ARG FLASHINFER_REF=v0.2.6.post1
 ARG FLASHINFER_BUILD_SUFFIX=cu128
 ENV FLASHINFER_LOCAL_VERSION=${FLASHINFER_BUILD_SUFFIX:-}
@@ -163,7 +163,7 @@ RUN cd flashinfer && \
     git submodule update --init --recursive -j 8
 RUN cd flashinfer && \
     python -m flashinfer.aot && \
-    uv build -v --wheel --no-build-isolation -o /wheels
+    python -m build -v --wheel --no-isolation -o /wheels
 
 FROM build-base AS build-vllm
 # COPY --from=build-torch /wheels/*.whl wheels/
