@@ -162,7 +162,7 @@ RUN cd flashinfer && \
     git submodule sync --recursive && \
     git submodule update --init --recursive -j 8
 RUN cd flashinfer && \
-    uv build --wheel --no-build-isolation -o /wheels
+    uv build -v --wheel --no-build-isolation -o /wheels
 
 FROM build-base AS build-vllm
 # COPY --from=build-torch /wheels/*.whl wheels/
@@ -177,7 +177,7 @@ RUN cd vllm && \
     git checkout ${VLLM_REF} && \
     python use_existing_torch.py && \
     uv pip install -r requirements/build.txt && \
-    uv build --wheel --no-build-isolation -o /wheels
+    uv build -v --wheel --no-build-isolation -o /wheels
 
 FROM base AS vllm-openai
 # COPY --from=build-torch /wheels/*.whl wheels/
