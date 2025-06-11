@@ -78,7 +78,7 @@ jobs:
       - name: Prepare some env vars
         run: |
           echo "GHCR_IMAGE=ghcr.io/${GITHUB_REPOSITORY@L}" >> ${GITHUB_ENV}
-          echo "CUDA_TAG=124" >> ${GITHUB_ENV}
+          echo "CUDA_TAG=128" >> ${GITHUB_ENV}
 
       - name: Login to GHCR
         uses: docker/login-action@v3
