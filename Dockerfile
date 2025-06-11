@@ -85,8 +85,8 @@ RUN cd flashinfer && \
     python -m build -v --wheel --no-isolation -o /wheels
 
 FROM build-base AS build-vllm
-ARG VLLM_REF=v0.9.0.1
-ARG VLLM_BUILD_VERSION=0.9.0.1
+ARG VLLM_REF=v0.9.1
+ARG VLLM_BUILD_VERSION=0.9.1
 ENV BUILD_VERSION=${VLLM_BUILD_VERSION:-${VLLM_REF#v}}
 ENV SETUPTOOLS_SCM_PRETEND_VERSION=${BUILD_VERSION:-:}
 RUN git clone https://github.com/vllm-project/vllm.git
