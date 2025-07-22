@@ -60,8 +60,8 @@ RUN mkdir /wheels
 RUN uv pip install -U build cmake ninja packaging pybind11 setuptools wheel
 
 FROM build-base AS build-xformers
-ARG XFORMERS_REF=v0.0.30
-ARG XFORMERS_BUILD_VERSION=0.0.30+cu128
+ARG XFORMERS_REF=v0.0.31
+ARG XFORMERS_BUILD_VERSION=0.0.31+cu128
 ENV BUILD_VERSION=${XFORMERS_BUILD_VERSION:-${XFORMERS_REF#v}}
 RUN git clone https://github.com/facebookresearch/xformers.git
 RUN cd xformers && \
@@ -72,7 +72,7 @@ RUN cd xformers && \
     uv build --wheel --no-build-isolation -o /wheels
 
 FROM build-base AS build-flashinfer
-ARG FLASHINFER_REF=v0.2.6.post1
+ARG FLASHINFER_REF=v0.2.8
 ARG FLASHINFER_BUILD_SUFFIX=cu128
 ENV FLASHINFER_LOCAL_VERSION=${FLASHINFER_BUILD_SUFFIX:-}
 RUN git clone https://github.com/flashinfer-ai/flashinfer.git
@@ -85,8 +85,8 @@ RUN cd flashinfer && \
     python -m build -v --wheel --no-isolation -o /wheels
 
 FROM build-base AS build-vllm
-ARG VLLM_REF=v0.9.2
-ARG VLLM_BUILD_VERSION=0.9.2
+ARG VLLM_REF=v0.10.0
+ARG VLLM_BUILD_VERSION=0.10.0
 ENV BUILD_VERSION=${VLLM_BUILD_VERSION:-${VLLM_REF#v}}
 ENV SETUPTOOLS_SCM_PRETEND_VERSION=${BUILD_VERSION:-:}
 RUN git clone https://github.com/vllm-project/vllm.git
