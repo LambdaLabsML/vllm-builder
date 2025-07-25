@@ -60,46 +60,45 @@ RUN mkdir /wheels
 RUN uv pip install -U build cmake ninja packaging pybind11 setuptools wheel
 
 FROM build-base AS build-xformers
-ARG XFORMERS_REF=v0.0.30
-ARG XFORMERS_BUILD_VERSION=0.0.30+cu128
+ARG XFORMERS_REF=v0.0.31
+ARG XFORMERS_BUILD_VERSION=0.0.31+cu128
 ENV BUILD_VERSION=${XFORMERS_BUILD_VERSION:-${XFORMERS_REF#v}}
-RUN git clone https://github.com/facebookresearch/xformers.git
-RUN cd xformers && \
-    git checkout ${XFORMERS_REF} && \
-    git submodule sync --recursive && \
-    git submodule update --init --recursive -j 8
+RUN git clone \
+    --branch ${XFORMERS_REF} --depth 1 \
+    --recursive --shallow-submodules -j 8 \
+    https://github.com/facebookresearch/xformers.git
 RUN cd xformers && \
     uv build --wheel --no-build-isolation -o /wheels
 
 FROM build-base AS build-flashinfer
-ARG FLASHINFER_REF=v0.2.6.post1
+ARG FLASHINFER_REF=v0.2.8
 ARG FLASHINFER_BUILD_SUFFIX=cu128
 ENV FLASHINFER_LOCAL_VERSION=${FLASHINFER_BUILD_SUFFIX:-}
-RUN git clone https://github.com/flashinfer-ai/flashinfer.git
-RUN cd flashinfer && \
-    git checkout ${FLASHINFER_REF} && \
-    git submodule sync --recursive && \
-    git submodule update --init --recursive -j 8
+RUN git clone \
+    --branch ${FLASHINFER_REF} --depth 1 -j 8 \
+    --recursive --shallow-submodules \
+    https://github.com/flashinfer-ai/flashinfer.git
 RUN cd flashinfer && \
     python -m flashinfer.aot && \
     python -m build -v --wheel --no-isolation -o /wheels
 
 FROM build-base AS build-vllm
-ARG VLLM_REF=v0.9.2
-ARG VLLM_BUILD_VERSION=0.9.2
+ARG VLLM_REF=v0.10.0
+ARG VLLM_BUILD_VERSION=0.10.0
 ENV BUILD_VERSION=${VLLM_BUILD_VERSION:-${VLLM_REF#v}}
 ENV SETUPTOOLS_SCM_PRETEND_VERSION=${BUILD_VERSION:-:}
-RUN git clone https://github.com/vllm-project/vllm.git
+RUN git clone \
+    --branch ${VLLM_REF} --depth 1 \
+    https://github.com/vllm-project/vllm.git
 RUN cd vllm && \
-    git checkout ${VLLM_REF} && \
     python use_existing_torch.py && \
     uv pip install -r requirements/build.txt && \
     uv build -v --wheel --no-build-isolation -o /wheels
 
-FROM torch-base AS vllm-openai
+FROM torch-base AS build-vllm-openai
 COPY --from=build-flashinfer /wheels/*.whl wheels/
-COPY --from=build-vllm /wheels/*.whl wheels/
 COPY --from=build-xformers /wheels/*.whl wheels/
+COPY --from=build-vllm /wheels/*.whl wheels/
 
 # Copy vllm examples directory
 COPY --from=build-vllm /workspace/vllm/examples /workspace/examples/
@@ -114,14 +113,40 @@ RUN uv pip install pynvml
 # Add additional packages for vLLM OpenAI
 RUN uv pip install accelerate hf_transfer modelscope bitsandbytes timm boto3 runai-model-streamer runai-model-streamer[s3] tensorizer
 
-# Clean uv cache
-RUN uv clean
+FROM nvcr.io/nvidia/cuda:${CUDA_VERSION}-runtime-${IMAGE_DISTRO} AS vllm-openai
+ARG PYTHON_VERSION=3.12
 
-# Clean apt cache
-RUN apt autoremove --purge -y
-RUN apt clean
-RUN rm -rf /var/lib/apt/lists/*
-RUN rm -rf /var/cache/apt/archives
+# Update apt packages and install dependencies
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt update && \
+    apt upgrade -y && \
+    apt install -y --no-install-recommends \
+      gcc-12 g++-12 \
+      curl && \
+    apt autoremove --purge -y && \
+    apt clean && \
+    rm -fr /var/lib/apt/lists/* && \
+    rm -fr /var/cache/apt/archives
+
+# Set compiler paths
+ENV CC=/usr/bin/gcc-12
+ENV CXX=/usr/bin/g++-12
+
+# Install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
+
+# Setup build workspace
+WORKDIR /workspace
+
+# Prep build venv
+ARG PYTHON_VERSION
+RUN uv venv -p ${PYTHON_VERSION} --seed --python-preference only-managed
+ENV VIRTUAL_ENV=/workspace/.venv
+ENV PATH=${VIRTUAL_ENV}/bin:${PATH}
+ENV CUDA_HOME=/usr/local/cuda
+ENV LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
+
+COPY --from=build-vllm-openai workspace/ /workspace/
 
 # Enable hf-transfer
 ENV HF_HUB_ENABLE_HF_TRANSFER=1
