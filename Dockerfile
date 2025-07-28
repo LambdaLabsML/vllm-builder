@@ -114,7 +114,6 @@ RUN uv pip install pynvml
 RUN uv pip install accelerate hf_transfer modelscope bitsandbytes timm boto3 runai-model-streamer runai-model-streamer[s3] tensorizer
 
 FROM nvcr.io/nvidia/cuda:${CUDA_VERSION}-runtime-${IMAGE_DISTRO} AS vllm-openai
-ARG PYTHON_VERSION=3.12
 
 # Update apt packages and install dependencies
 ENV DEBIAN_FRONTEND=noninteractive
@@ -132,21 +131,16 @@ RUN apt update && \
 ENV CC=/usr/bin/gcc-12
 ENV CXX=/usr/bin/g++-12
 
-# Install uv
-RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
-
-# Setup build workspace
+# Setup runtime workspace
 WORKDIR /workspace
+COPY --from=build-vllm-openai workspace/ /workspace/
+COPY --from=build-vllm-openai /root/.local/ /root/.local/
 
-# Prep build venv
-ARG PYTHON_VERSION
-RUN uv venv -p ${PYTHON_VERSION} --seed --python-preference only-managed
+# Set environment variables
 ENV VIRTUAL_ENV=/workspace/.venv
 ENV PATH=${VIRTUAL_ENV}/bin:${PATH}
 ENV CUDA_HOME=/usr/local/cuda
 ENV LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
-
-COPY --from=build-vllm-openai workspace/ /workspace/
 
 # Enable hf-transfer
 ENV HF_HUB_ENABLE_HF_TRANSFER=1
